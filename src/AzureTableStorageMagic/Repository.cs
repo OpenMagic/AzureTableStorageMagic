@@ -1,13 +1,13 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage.Table;
 
-namespace AzureTableStorageMagic.Core
+namespace AzureTableStorageMagic
 {
     /// <summary>
-    ///     <see cref="Table{TEntity}" /> implements <see cref="ITable{TEntity}"/> and provides the basic CRUD operations for an Azure table.
+    ///     <see cref="Repository{TEntity}" /> implements <see cref="IRepository{TEntity}"/> and provides the basic CRUD operations for an Azure table.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity the table stores.</typeparam>
-    public class Table<TEntity> : ITable<TEntity> where TEntity : ITableEntity
+    public class Repository<TEntity> : IRepository<TEntity> where TEntity : ITableEntity
     {
         /// <summary>
         /// Adds the entity to the Azure table.
