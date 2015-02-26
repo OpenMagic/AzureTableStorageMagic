@@ -1,5 +1,13 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Net;
+using AzureTableStorageMagic.Infrastructure;
 using AzureTableStorageMagic.Specifications.Support;
+using FakeItEasy;
+using FluentAssertions;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
 using TechTalk.SpecFlow;
 
 namespace AzureTableStorageMagic.Specifications.Features.Repository
@@ -7,86 +15,147 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
     [Binding]
     public class AddSteps
     {
-        private readonly ITable _table;
+        private readonly IAzureStorageEmulator _storageEmulator;
         private readonly GivenData _given;
+        private readonly ActualData _actual;
+        private readonly Lazy<Repository<DummyTableEntity>> _repository;
+        private readonly IEntityValidator _entityValidator;
+        private readonly IHttpStatusCodeValidator _httpStatusCodeValidator;
+        private const string FeatureName = "Repository.Add";
 
-        public AddSteps(ITable table, GivenData given)
+        public AddSteps(IAzureStorageEmulator storageEmulator, GivenData given, ActualData actual)
         {
-            _table = table;
+            _storageEmulator = storageEmulator;
             _given = given;
+            _actual = actual;
+
+            _entityValidator = A.Fake<IEntityValidator>();
+            _httpStatusCodeValidator = A.Fake<IHttpStatusCodeValidator>();
+            _repository = new Lazy<Repository<DummyTableEntity>>(() => new Repository<DummyTableEntity>(_given.ConnectionString, _given.TableName, _entityValidator, _httpStatusCodeValidator));
+
+            A.CallTo(() => _httpStatusCodeValidator.IsOK(A<int>.That.Matches(i => i < 400))).Returns(true);
+
         }
 
         [Given(@"Windows Azure Storage Emulator is running")]
         public void GivenWindowsAzureStorageEmulatorIsRunning()
         {
-            WindowAzureStorageEmulator.StartEmulator();
-            _given.ConnectionString = WindowAzureStorageEmulator.ConnectionString;
+            _storageEmulator.StartEmulatorIfNotRunning();
         }
 
         [Given(@"table exists")]
         public void GivenTableExists()
         {
-            _table.CreateTableIfNotExists(_given.ConnectionString, _given.TableName).Wait();
+            new AzureTableStorageMagic.Table(AzureStorageEmulator.ConnectionString, _given.TableName).CreateTableIfNotExists().Wait();
         }
 
         [Given(@"entity is valid")]
         public void GivenEntityIsValid()
         {
-            throw new NotImplementedException();
+            _given.TableEntity = new DummyTableEntity();
         }
 
         [Given(@"entity is null")]
         public void GivenEntityIsNull()
         {
-            throw new NotImplementedException();
+            _given.TableEntity = null;
+        }
+
+        [Given(@"entity is not valid")]
+        public void GivenEntityIsNotValid()
+        {
+            _given.TableEntity = new DummyTableEntity();
+
+            A.CallTo(() => _entityValidator.Validate(A<ITableEntity>.Ignored)).Invokes(() => { throw new ValidationException(); });
         }
 
         [Given(@"Windows Azure Storage Emulator is not running")]
         public void GivenWindowsAzureStorageEmulatorIsNotRunning()
         {
-            throw new NotImplementedException();
+            _storageEmulator.StopEmulatorIfIsRunning();
         }
 
         [Given(@"the table does not exist")]
         public void GivenTheTableDoesNotExist()
         {
-            throw new NotImplementedException();
+            new AzureTableStorageMagic.Table(AzureStorageEmulator.ConnectionString, _given.TableName).DeleteTableIfExists().Wait();
         }
 
+        [Given(@"entity\.RowKey is null")]
+        public void GivenEntity_RowKeyIsNull()
+        {
+            _given.TableEntity.RowKey = null;
+        }
+
+        [Given(@"Add\(entity\) result\.HttpStatusCode is 400 or above")]
+        public void GivenAddEntityResult_HttpStatusCodeIsOrAbove()
+        {
+            A.CallTo(() => _httpStatusCodeValidator.IsOK(A<int>.Ignored)).Returns(false);
+        }
+        
         [When(@"Add\(entity\) is called")]
         public void WhenAddEntityIsCalled()
         {
-            throw new NotImplementedException();
+            _actual.ExecuteWhen(() => _repository.Value.AddEntity((DummyTableEntity)_given.TableEntity));
         }
 
         [Then(@"entity should be added to the table")]
         public void ThenEntityShouldBeAddedToTheTable()
         {
-            throw new NotImplementedException();
+            GetRowCount().Should().Be(1);
         }
 
-        [Then(@"ArgumentException should be thrown for entity")]
-        public void ThenArgumentExceptionShouldBeThrownForEntity()
+        [Scope(Feature = FeatureName)]
+        [Then(@"ValidationException should be thrown for entity")]
+        public void ThenValidationExceptionShouldBeThrownForEntity()
         {
-            throw new NotImplementedException();
+            ThenExceptionShouldBeThrown<ValidationException>();
         }
 
-        [Then(@"ArgumentNullException should be thrown for entityScenario: when Azure service cannot be reached")]
-        public void ThenArgumentNullExceptionShouldBeThrownForEntityScenarioWhenAzureServiceCannotBeReached()
+        [Then(@"the entity should not be added to the table")]
+        public void ThenTheEntityShouldNotBeAddedToTheTable()
         {
-            throw new NotImplementedException();
+            _storageEmulator.StartEmulatorIfNotRunning();
+
+            GetRowCount().Should().Be(0);
         }
 
-        [Then(@"IFailedHandler\.Add\(connectionString, tableName, entity\) should be called")]
-        public void ThenIFailedHandler_AddConnectionStringTableNameEntityShouldBeCalled()
+        [Then(@"WebException with '(.*)' message should be thrown")]
+        public void ThenWebExceptionWithMessageShouldBeThrown(string expectedMessage)
         {
-            throw new NotImplementedException();
+            ThenExceptionWithMessageShouldBeThrown<WebException>(expectedMessage);
         }
 
-        [Then(@"the entity should be added to the table")]
-        public void ThenTheEntityShouldBeAddedToTheTable()
+        [Then(@"StorageException with '(.*)' message should be thrown")]
+        public void ThenStorageExceptionWithMessageShouldBeThrown(string expectedMessage)
         {
-            throw new NotImplementedException();
+            ThenExceptionWithMessageShouldBeThrown<StorageException>(expectedMessage);
+        }
+
+        private void ThenExceptionWithMessageShouldBeThrown<TException>(string expectedMessage) where TException : Exception
+        {
+            var repositoryException = ThenExceptionShouldBeThrown<TException>();
+
+            repositoryException.Message.Should().Be(expectedMessage);
+        }
+
+        private TException ThenExceptionShouldBeThrown<TException>()
+        {
+            var aggregateException = _actual.Exception.Should().BeOfType<AggregateException>().Which;
+
+            aggregateException.InnerExceptions.Count().Should().Be(1);
+
+            var repositoryException = aggregateException.InnerExceptions.First().Should().BeOfType<RepositoryException>().Which;
+
+            return repositoryException.InnerException.Should().BeOfType<TException>().Which;
+        }
+
+        private int GetRowCount()
+        {
+            var query = new TableQuery<DummyTableEntity>();
+            var rows = _given.CloudTable.ExecuteQuery(query);
+
+            return rows.Count();
         }
     }
 }

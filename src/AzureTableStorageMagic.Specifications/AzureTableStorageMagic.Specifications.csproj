@@ -43,6 +43,9 @@
     <Reference Include="Common.Logging.NLog31">
       <HintPath>..\..\packages\Common.Logging.NLog31.3.0.0\lib\net40\Common.Logging.NLog31.dll</HintPath>
     </Reference>
+    <Reference Include="FakeItEasy">
+      <HintPath>..\..\packages\FakeItEasy.1.25.2\lib\net40\FakeItEasy.dll</HintPath>
+    </Reference>
     <Reference Include="FluentAssertions, Version=3.3.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\FluentAssertions.3.3.0\lib\net45\FluentAssertions.dll</HintPath>
@@ -79,6 +82,7 @@
       <HintPath>..\..\packages\NLog.3.2.0.0\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Spatial, Version=5.6.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -104,11 +108,36 @@
     <Compile Include="..\AzureTableStorageMagic\Properties\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Features\Infrastructure\EntityValidator\ValidateSteps.cs" />
+    <Compile Include="Features\Infrastructure\EntityValidator\Validate.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Validate.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Features\Infrastructure\KeyValidator\ValidateRowKey.feature.cs">
+      <DependentUpon>ValidateRowKey.feature</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Features\Infrastructure\KeyValidator\ValidatePartitionKey.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ValidatePartitionKey.feature</DependentUpon>
+    </Compile>
     <Compile Include="Features\Repository\Add.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Add.feature</DependentUpon>
     </Compile>
+    <Compile Include="Features\Table\DeleteTableIfExists.feature.cs">
+      <DependentUpon>DeleteTableIfExists.feature</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Features\Infrastructure\KeyValidator\ValidateRowKeySteps.cs" />
+    <Compile Include="Support\As.cs" />
+    <Compile Include="Support\CommonBindings.cs" />
+    <Compile Include="Support\DummyTableEntity.cs" />
     <Compile Include="Support\ActualData.cs" />
     <Compile Include="Features\Table\CreateTableIfNotExists.feature.cs">
       <AutoGen>True</AutoGen>
@@ -120,12 +149,33 @@
     <Compile Include="Support\ContextInjection.cs" />
     <Compile Include="Support\GivenData.cs" />
     <Compile Include="Features\Table\CreateTableIfNotExistsSteps.cs" />
+    <Compile Include="Features\Table\DeleteTableIfExistsSteps.cs" />
+    <Compile Include="Support\RandomGenerator.cs" />
+    <Compile Include="Features\Infrastructure\KeyValidator\ValidatePartitionKeySteps.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Features\Infrastructure\EntityValidator\Validate.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>Validate.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Features\Infrastructure\KeyValidator\ValidateRowKey.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>ValidateRowKey.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Features\Infrastructure\KeyValidator\ValidatePartitionKey.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>ValidatePartitionKey.feature.cs</LastGenOutput>
+    </None>
     <None Include="Features\Repository\Add.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Add.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Features\Table\DeleteTableIfExists.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>DeleteTableIfExists.feature.cs</LastGenOutput>
     </None>
     <None Include="Features\Table\CreateTableIfNotExists.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>

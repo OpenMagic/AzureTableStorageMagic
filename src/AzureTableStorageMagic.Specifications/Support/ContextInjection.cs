@@ -1,4 +1,5 @@
-﻿using BoDi;
+﻿using AzureTableStorageMagic.Infrastructure;
+using BoDi;
 using TechTalk.SpecFlow;
 
 namespace AzureTableStorageMagic.Specifications.Support
@@ -16,7 +17,8 @@ namespace AzureTableStorageMagic.Specifications.Support
         [BeforeScenario]
         public void InitializeObjectContainer()
         {
-            _objectContainer.RegisterTypeAs<Table, ITable>();
+            _objectContainer.RegisterInstanceAs(new AzureStorageEmulator(),typeof(IAzureStorageEmulator));
+            _objectContainer.RegisterInstanceAs(new EntityValidator(), typeof(IEntityValidator));
         }
     }
 }

@@ -10,25 +10,32 @@ Scenario: when entity is valid
 	Then entity should be added to the table
 
 Scenario: when entity is not valid
-	Given entity is null
+	Given entity is not valid
 	When Add(entity) is called
-	Then ArgumentException should be thrown for entity
+	Then ValidationException should be thrown for entity
+	And the entity should not be added to the table
 
 Scenario: when entity is null
 	Given entity is null
 	When Add(entity) is called
-	Then ArgumentNullException should be thrown for entityScenario: when Azure service cannot be reached
+	Then ArgumentNullException should be thrown for entity
+	And the entity should not be added to the table
 
 Scenario: when Azure service is not available
 	Given Windows Azure Storage Emulator is not running
 	And entity is valid
 	When Add(entity) is called
-	Then IFailedHandler.Add(connectionString, tableName, entity) should be called
-	And the entity should be added to the table
+	Then StorageException with 'Unable to connect to the remote server' message should be thrown
+	And the entity should not be added to the table
 
 Scenario: when table does not exist
 	Given the table does not exist
 	And entity is valid
 	When Add(entity) is called
-	Then IFailedHandler.Add(connectionString, tableName, entity) should be called
-	And the entity should be added to the table
+	Then StorageException with 'The remote server returned an error: (404) Not Found.' message should be thrown
+
+Scenario: when HTTP status code is failure
+	Given entity is valid
+	And Add(entity) result.HttpStatusCode is 400 or above
+	When Add(entity) is called
+	Then WebException with 'Insert operation failed with HttpStatusCode 'NoContent'. Surprised CloudTable didn't throw the error itself.' message should be thrown
