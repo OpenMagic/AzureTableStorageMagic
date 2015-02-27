@@ -124,6 +124,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ValidatePartitionKey.feature</DependentUpon>
     </Compile>
+    <Compile Include="Features\Repository\Update.feature.cs">
+      <DependentUpon>Update.feature</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="Features\Repository\Add.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -135,6 +140,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="Features\Infrastructure\KeyValidator\ValidateRowKeySteps.cs" />
+    <Compile Include="Features\Repository\UpdateSteps.cs" />
     <Compile Include="Support\As.cs" />
     <Compile Include="Support\CommonBindings.cs" />
     <Compile Include="Support\DummyTableEntity.cs" />
@@ -168,6 +174,10 @@
     <None Include="Features\Infrastructure\KeyValidator\ValidatePartitionKey.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>ValidatePartitionKey.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Features\Repository\Update.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>Update.feature.cs</LastGenOutput>
     </None>
     <None Include="Features\Repository\Add.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>

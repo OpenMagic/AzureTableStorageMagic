@@ -21,9 +21,9 @@ namespace AzureTableStorageMagic
         private readonly CloudTable _cloudTable;
         private readonly string _connectionString;
         private readonly string _tableName;
-        private readonly IEntityValidator _entityValidator;
         private readonly IHttpStatusCodeValidator _httpStatusCodeValidator;
         private readonly ILog _log;
+        private readonly IEntityValidator _entityValidator;
 
         public Repository(string connectionString, string tableName)
             : this(connectionString, tableName, new EntityValidator(), new HttpStatusCodeValidator())
@@ -49,9 +49,9 @@ namespace AzureTableStorageMagic
         /// <returns>
         ///   <see cref="AddEntity" /> is an asynchronous method and returns <see cref="Task" />.
         /// </returns>
-        public async Task AddEntity(TEntity entity)
+        public Task AddEntity(TEntity entity)
         {
-            await ExecuteOperation(entity, TableOperation.Insert(entity), "Insert", "Adding", "Added");
+            return ExecuteOperation(entity, TableOperation.Insert(entity), "Insert", "Adding", "Added");
         }
 
         /// <summary>
@@ -89,7 +89,9 @@ namespace AzureTableStorageMagic
         /// </returns>
         public Task UpdateEntity(TEntity entity)
         {
-            throw new NotImplementedException();
+            entity.ETag = "*";
+
+            return ExecuteOperation(entity, TableOperation.Replace(entity), "Replace", "Updating", "Updated");
         }
 
         private async Task ExecuteOperation(TEntity entity, TableOperation operation, string operationName, string doingVerb, string didVerb)

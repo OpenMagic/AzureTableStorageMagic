@@ -15,8 +15,9 @@ namespace AzureTableStorageMagic.Specifications.Support
         private static readonly ILog Log = LogManager.GetLogger<GivenData>();
         private string _tableName;
         public string ConnectionString;
-        public TableEntity TableEntity;
         public ICollection<ValidationResult> ValidationResults = new List<ValidationResult>();
+        public IEntityValidator EntityValidator;
+        private ITableEntity _tableEntity;
 
         public GivenData()
         {
@@ -31,6 +32,26 @@ namespace AzureTableStorageMagic.Specifications.Support
             {
                 CleanupTable();
                 _tableName = value;
+            }
+        }
+
+        public ITableEntity TableEntity
+        {
+            get { return _tableEntity; }
+            set
+            {
+                if (_tableEntity != value)
+                {
+                    if (value == null)
+                    {
+                        Log.Debug("TableEntity changed to null.");
+                    }
+                    else
+                    {
+                        Log.DebugFormat("TableEntity changed to {0}, {1}", value.PartitionKey, value.RowKey);
+                    }
+                }
+                _tableEntity = value;
             }
         }
 

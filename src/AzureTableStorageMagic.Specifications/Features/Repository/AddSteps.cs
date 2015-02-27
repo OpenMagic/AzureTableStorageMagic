@@ -15,13 +15,12 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
     [Binding]
     public class AddSteps
     {
-        private readonly IAzureStorageEmulator _storageEmulator;
-        private readonly GivenData _given;
-        private readonly ActualData _actual;
-        private readonly Lazy<Repository<DummyTableEntity>> _repository;
-        private readonly IEntityValidator _entityValidator;
-        private readonly IHttpStatusCodeValidator _httpStatusCodeValidator;
         private const string FeatureName = "Repository.Add";
+        private readonly ActualData _actual;
+        private readonly GivenData _given;
+        private readonly IHttpStatusCodeValidator _httpStatusCodeValidator;
+        private readonly Lazy<Repository<DummyTableEntity>> _repository;
+        private readonly IAzureStorageEmulator _storageEmulator;
 
         public AddSteps(IAzureStorageEmulator storageEmulator, GivenData given, ActualData actual)
         {
@@ -29,12 +28,11 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
             _given = given;
             _actual = actual;
 
-            _entityValidator = A.Fake<IEntityValidator>();
+            _given.EntityValidator = A.Fake<IEntityValidator>();
             _httpStatusCodeValidator = A.Fake<IHttpStatusCodeValidator>();
-            _repository = new Lazy<Repository<DummyTableEntity>>(() => new Repository<DummyTableEntity>(_given.ConnectionString, _given.TableName, _entityValidator, _httpStatusCodeValidator));
+            _repository = new Lazy<Repository<DummyTableEntity>>(() => new Repository<DummyTableEntity>(_given.ConnectionString, _given.TableName, _given.EntityValidator, _httpStatusCodeValidator));
 
             A.CallTo(() => _httpStatusCodeValidator.IsOK(A<int>.That.Matches(i => i < 400))).Returns(true);
-
         }
 
         [Given(@"Windows Azure Storage Emulator is running")]
@@ -52,7 +50,7 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
         [Given(@"entity is valid")]
         public void GivenEntityIsValid()
         {
-            _given.TableEntity = new DummyTableEntity();
+            // nothing to do. Given.DummyTable is created with Given ctor.
         }
 
         [Given(@"entity is null")]
@@ -66,7 +64,7 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
         {
             _given.TableEntity = new DummyTableEntity();
 
-            A.CallTo(() => _entityValidator.Validate(A<ITableEntity>.Ignored)).Invokes(() => { throw new ValidationException(); });
+            A.CallTo(() => _given.EntityValidator.Validate(A<ITableEntity>.Ignored)).Invokes(() => { throw new ValidationException(new ValidationResult("fake", new[] { "entity" }), null, null); });
         }
 
         [Given(@"Windows Azure Storage Emulator is not running")]
@@ -92,11 +90,11 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
         {
             A.CallTo(() => _httpStatusCodeValidator.IsOK(A<int>.Ignored)).Returns(false);
         }
-        
+
         [When(@"Add\(entity\) is called")]
         public void WhenAddEntityIsCalled()
         {
-            _actual.ExecuteWhen(() => _repository.Value.AddEntity((DummyTableEntity)_given.TableEntity));
+            _actual.ExecuteWhen(() => _repository.Value.AddEntity(_given.DummyEntity));
         }
 
         [Then(@"entity should be added to the table")]
@@ -115,7 +113,7 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
         [Then(@"the entity should not be added to the table")]
         public void ThenTheEntityShouldNotBeAddedToTheTable()
         {
-            _storageEmulator.StartEmulatorIfNotRunning();
+            _storageEmulator.StartEmulatorIfNotRunning(); // Required for 'when Azure service is not available' scenario.
 
             GetRowCount().Should().Be(0);
         }

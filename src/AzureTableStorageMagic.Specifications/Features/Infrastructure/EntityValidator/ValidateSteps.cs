@@ -57,13 +57,34 @@ namespace AzureTableStorageMagic.Specifications.Features.Infrastructure.EntityVa
 
         private static IEnumerable<string> GetNamesOfInvalidProperties(AggregateException aggregateException)
         {
-            var validationExceptions = aggregateException.InnerExceptions.Select(e => e as ValidationException).ToArray();
-
-            validationExceptions.Count(e => e == null).Should().Be(0, "because all inner exceptions should be ValidationException");
-
-            var memberNames = validationExceptions.SelectMany(e => e.ValidationResult.MemberNames);
+            var validationExceptions = aggregateException.InnerExceptions.Select(GetValidationException).ToArray();
+            var memberNames = validationExceptions.SelectMany(e => e.ValidationResult.MemberNames).ToArray();
 
             return memberNames;
+        }
+
+        private static ValidationException GetValidationException(Exception e)
+        {
+            var validationException = e as ValidationException;
+
+            if (validationException != null)
+            {
+                return validationException;
+            }
+
+            var repositoryException = e as RepositoryException;
+
+            if (repositoryException != null)
+            {
+                validationException = repositoryException.InnerException as ValidationException;
+            }
+
+            if (validationException == null)
+            {
+                throw new Exception(string.Format("Expected to find ValidationException from '{0}'.", e.GetType()));
+            }
+
+            return validationException;
         }
     }
 }
