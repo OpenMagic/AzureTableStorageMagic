@@ -2,7 +2,9 @@
 using System.Net;
 using System.Threading.Tasks;
 using AzureTableStorageMagic.Infrastructure;
+using AzureTableStorageMagic.RepositoryExceptions;
 using Common.Logging;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace AzureTableStorageMagic
@@ -49,9 +51,16 @@ namespace AzureTableStorageMagic
         /// <returns>
         ///   <see cref="AddEntity" /> is an asynchronous method and returns <see cref="Task" />.
         /// </returns>
-        public Task AddEntity(TEntity entity)
+        public async Task AddEntity(TEntity entity)
         {
-            return ExecuteOperation(entity, TableOperation.Insert(entity), "Insert", "Adding", "Added");
+            try
+            {
+                await ExecuteOperation(entity, TableOperation.Insert(entity), "Insert", "Adding", "Added");
+            }
+            catch (Exception exception)
+            {
+                throw new AddEntityException(_connectionString, _tableName, entity.PartitionKey, entity.RowKey, exception);
+            }
         }
 
         /// <summary>
@@ -109,11 +118,19 @@ namespace AzureTableStorageMagic
                     throw new WebException(string.Format("{0} operation failed with HttpStatusCode '{1}'. Surprised CloudTable didn't throw the error itself.", operationName, (HttpStatusCode)result.HttpStatusCode));
                 }
             }
-            catch (Exception exception)
+            catch (StorageException exception)
             {
-                throw new RepositoryException(string.Format("Cannot {0} entity.", operationName.ToLower()), _connectionString, _tableName, entity.PartitionKey, entity.RowKey, exception);
-            }
+                if ((exception.RequestInformation.HttpStatusCode == (int)HttpStatusCode.NotFound) && !(_cloudTable.Exists()))
+                {
+                    throw new TableNotFoundException(_connectionString, _tableName, exception);
+                }
+                if ((exception.RequestInformation.HttpStatusCode == 0) && (exception.Message == "Unable to connect to the remote server"))
+                {
+                    throw new ServerNotFoundException(_connectionString, exception);
+                }
 
+                throw;
+            }
             _log.TraceFormat("{0} entity. PartitionKey: '{1}', RowKey: '{2}'", didVerb, entity.PartitionKey, entity.RowKey);
         }
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AzureTableStorageMagic.RepositoryExceptions;
 
 namespace AzureTableStorageMagic.Specifications.Support
 {
@@ -7,6 +8,10 @@ namespace AzureTableStorageMagic.Specifications.Support
     {
         public object Result;
         public Exception Exception;
+        public AggregateException AggregateException;
+        public AddEntityException AddEntityException;
+        public ServerNotFoundException ServerNotFoundException;
+        public TableNotFoundException TableNotFoundException;
 
         public void ExecuteWhen(Func<object> whenAction)
         {

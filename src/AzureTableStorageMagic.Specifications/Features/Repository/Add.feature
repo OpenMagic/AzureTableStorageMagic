@@ -12,7 +12,9 @@ Scenario: when entity is valid
 Scenario: when entity is not valid
 	Given entity is not valid
 	When Add(entity) is called
-	Then ValidationException should be thrown for entity
+	Then AggregateException should be thrown
+	And AggregateException.InnerExceptions should be AddEntityException
+	And AddEntityException.InnerException should be ValidationException
 	And the entity should not be added to the table
 
 Scenario: when entity is null
@@ -25,17 +27,25 @@ Scenario: when Azure service is not available
 	Given Windows Azure Storage Emulator is not running
 	And entity is valid
 	When Add(entity) is called
-	Then StorageException with 'Unable to connect to the remote server' message should be thrown
+	Then AggregateException should be thrown
+	And AggregateException.InnerExceptions should be AddEntityException
+	And AddEntityException.InnerException should be ServerNotFoundException
+	And ServerNotFound.InnerException should be StorageException with 'Unable to connect to the remote server' message
 	And the entity should not be added to the table
 
 Scenario: when table does not exist
 	Given the table does not exist
 	And entity is valid
 	When Add(entity) is called
-	Then StorageException with 'The remote server returned an error: (404) Not Found.' message should be thrown
+	Then AggregateException should be thrown
+	And AggregateException.InnerExceptions should be AddEntityException
+	And AddEntityException.InnerException should be TableNotFoundException
+	And TableNotFound.InnerException should be StorageException with 'The remote server returned an error: (404) Not Found.' message
 
 Scenario: when HTTP status code is failure
 	Given entity is valid
 	And Add(entity) result.HttpStatusCode is 400 or above
 	When Add(entity) is called
-	Then WebException with 'Insert operation failed with HttpStatusCode 'NoContent'. Surprised CloudTable didn't throw the error itself.' message should be thrown
+	Then AggregateException should be thrown
+	And AggregateException.InnerExceptions should be AddEntityException
+	And AddEntityException.InnerException should be WebException with 'Insert operation failed with HttpStatusCode 'NoContent'. Surprised CloudTable didn't throw the error itself.' message

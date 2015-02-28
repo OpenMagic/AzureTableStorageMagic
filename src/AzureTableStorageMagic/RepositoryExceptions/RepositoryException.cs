@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using EmptyStringGuard;
 using NullGuard;
 
-namespace AzureTableStorageMagic
+namespace AzureTableStorageMagic.RepositoryExceptions
 {
+    [Obsolete]
     public class RepositoryException : Exception
     {
         private readonly Dictionary<string, object> _data;
@@ -20,6 +21,8 @@ namespace AzureTableStorageMagic
                 {"partitionKey", partitionKey},
                 {"rowKey", rowKey}
             };
+
+            throw new NotSupportedException();
         }
 
         public override IDictionary Data

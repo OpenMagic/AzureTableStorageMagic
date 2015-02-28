@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using AzureTableStorageMagic.Infrastructure;
+using AzureTableStorageMagic.RepositoryExceptions;
 using AzureTableStorageMagic.Specifications.Support;
 using FakeItEasy;
 using FluentAssertions;
@@ -130,6 +131,68 @@ namespace AzureTableStorageMagic.Specifications.Features.Repository
             ThenExceptionWithMessageShouldBeThrown<StorageException>(expectedMessage);
         }
 
+        [Then(@"AggregateException should be thrown")]
+        public void ThenAggregateExceptionShouldBeThrown()
+        {
+            _actual.AggregateException = _actual.Exception.Should().BeOfType<AggregateException>().Which;
+        }
+
+        [Then(@"AggregateException\.InnerExceptions should be AddEntityException")]
+        public void ThenAggregateException_InnerExceptionsShouldBeAddEntityException()
+        {
+            _actual.AggregateException.InnerExceptions.Count.Should().Be(1);
+            _actual.AddEntityException = _actual.AggregateException.InnerException.Should().BeOfType<AddEntityException>().Which;
+        }
+
+        [Then(@"AddEntityException\.InnerException should be ValidationException")]
+        public void ThenAddEntityException_InnerExceptionShouldBeValidationException()
+        {
+            _actual.AddEntityException.InnerException.Should().BeOfType<ValidationException>();
+        }
+
+        [Then(@"AggregateException\.InnerExceptions should be ArgumentNullException")]
+        public void ThenAggregateException_InnerExceptionsShouldBeArgumentNullException()
+        {
+            _actual.AggregateException.InnerExceptions.Count.Should().Be(1);
+            _actual.AggregateException.InnerException.Should().BeOfType<ArgumentNullException>();
+        }
+
+        [Then(@"AddEntityException\.InnerException should be ServerNotFoundException")]
+        public void ThenAddEntityException_InnerExceptionShouldBeServerNotFoundException()
+        {
+            _actual.ServerNotFoundException = _actual.AddEntityException.InnerException.Should().BeOfType<ServerNotFoundException>().Which;
+        }
+
+        [Then(@"ServerNotFound\.InnerException should be StorageException with '(.*)' message")]
+        public void ThenServerNotFound_InnerExceptionShouldBeStorageExceptionWithMessage(string expectedMessage)
+        {
+            _actual.ServerNotFoundException.InnerException.Should()
+                .BeOfType<StorageException>().Which
+                .Message.Should().Be(expectedMessage);
+        }
+
+        [Then(@"AddEntityException\.InnerException should be TableNotFoundException")]
+        public void ThenAddEntityException_InnerExceptionShouldBeTableNotFoundException()
+        {
+            _actual.TableNotFoundException = _actual.AddEntityException.InnerException.Should().BeOfType<TableNotFoundException>().Which;
+        }
+
+        [Then(@"TableNotFound\.InnerException should be StorageException with '(.*)' message")]
+        public void ThenTableNotFound_InnerExceptionShouldBeStorageExceptionWithMessage(string expectedMessage)
+        {
+            _actual.TableNotFoundException.InnerException.Should()
+                .BeOfType<StorageException>().Which
+                .Message.Should().Be(expectedMessage);
+        }
+
+        [Then(@"AddEntityException\.InnerException should be WebException with '(.*)' message")]
+        public void ThenAddEntityException_InnerExceptionShouldBeWebExceptionWithNoContentTThrowTheErrorItself_Message(string expectedMessage)
+        {
+            _actual.AddEntityException.InnerException.Should()
+                .BeOfType<WebException>().Which
+                .Message.Should().Be(expectedMessage);
+        }
+        
         private void ThenExceptionWithMessageShouldBeThrown<TException>(string expectedMessage) where TException : Exception
         {
             var repositoryException = ThenExceptionShouldBeThrown<TException>();

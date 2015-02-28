@@ -84,7 +84,7 @@
     <Compile Include="Infrastructure\EntityValidator.cs" />
     <Compile Include="Infrastructure\IKeyValidator.cs" />
     <Compile Include="Infrastructure\HttpStatusCodeValidator.cs" />
-    <Compile Include="RepositoryException.cs" />
+    <Compile Include="RepositoryExceptions\RepositoryException.cs" />
     <Compile Include="Infrastructure\IHttpStatusCodeValidator.cs" />
     <Compile Include="Infrastructure\IEntityValidator.cs" />
     <Compile Include="IRepository.cs" />
@@ -93,6 +93,10 @@
     <Compile Include="Repository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\CommonAssemblyInfo.cs" />
+    <Compile Include="RepositoryExceptions\AddEntityException.cs" />
+    <Compile Include="RepositoryExceptions\RepositoryExceptionBase.cs" />
+    <Compile Include="RepositoryExceptions\ServerNotFoundException.cs" />
+    <Compile Include="RepositoryExceptions\TableNotFoundException.cs" />
     <Compile Include="Table.cs" />
     <Compile Include="Infrastructure\AzureStorageEmulator.cs" />
   </ItemGroup>
